@@ -48,22 +48,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const res = await client.responses.create({
-      model: "gpt-4o-mini",
-      input: [
-        { role: "system", content: sys },
-        { role: "user", content: userMsg },
-      ],
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "Storybook", schema, strict: true },
-      },
-    });
-    const json = JSON.parse(res.output_text || "{}");
-    return NextResponse.json(json);
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Failed to generate story" },
-      { status: 500 },
-    );
-  }
-}
+  model: "gpt-4o-mini",
+  input: [
+    { role: "system", content: sys },
+    { role: "user", content: userMsg },
+  ],
+  // Specify the structured output format.
+  text: {
+    format: {
+      type: "json_schema",
+      name: "Storybook",
+      strict: true,
+      schema: schema,
+    },
+  },
+});
+
+// Parse the JSON from the aggregated text field.
+const json = JSON.parse(res.output_text || "{}");
+return NextResponse.json(json);
