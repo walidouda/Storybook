@@ -248,68 +248,43 @@ export default function Home() {
         images.push({ blob, name: `page${i}.png` });
       }
 
-      // 3) Load FFmpeg wasm
-      const ffmpeg = new FFmpeg();
-      await ffmpeg.load({
-        coreURL: await toBlobURL(
-          "https://unpkg.com/@ffmpeg/core@0.12.6/dist/ffmpeg-core.js",
-          "text/javascript",
-        ),
-        wasmURL: await toBlobURL(
-          "https://unpkg.com/@ffmpeg/core@0.12.6/dist/ffmpeg-core.wasm",
-          "application/wasm",
-        ),
-      });
+   // ...
+// 3) Load FFmpeg wasm
+const ffmpeg = new FFmpeg();
+// Load core files from /public/ffmpeg.  Copy these files from
+// node_modules/@ffmpeg/core/dist into public/ffmpeg (see step 2).
+await ffmpeg.load({
+  coreURL: "/ffmpeg/ffmpeg-core.js",
+  wasmURL: "/ffmpeg/ffmpeg-core.wasm",
+});
 
-      // 4) Write the images and audio into FFmpeg FS
-      await Promise.all(
-        images.map((im) => ffmpeg.writeFile(im.name, fetchFile(im.blob))),
-      );
-      await Promise.all(
-        pagesWithAudio.map(async (p, i) => {
-          const blob = await (await fetch(p.audioUrl!)).blob();
-          await ffmpeg.writeFile(`audio${i}.mp3`, fetchFile(blob));
-        }),
-      );
+// 4) Write images and audio into FFmpeg FS
+// ...
 
-      // 5) Build segments with fades and page‑turn sound effect
-      // Pre‑load a simple whoosh sound into FFmpeg FS (base64 encoded)
-      const whoosh = await fetch(
-        "https://cdn.jsdelivr.net/gh/mattt/ffmpeg-page-turn@main/whoosh.mp3",
-      ).then((r) => r.arrayBuffer());
-      await ffmpeg.writeFile("whoosh.mp3", new Uint8Array(whoosh));
+// 5) Build segments with fades only (no whoosh sound)
+const listFile: string[] = ["ffconcat version 1.0"];
+for (let i = 0; i < pagesWithAudio.length; i++) {
+  const imageName = images[i].name;
+  const outName = `seg${i}.mp4`;
+  await ffmpeg.exec([
+    "-loop", "1",
+    "-i", imageName,
+    "-i", `audio${i}.mp3`,
+    "-filter_complex",
+    `[0:v]format=yuv420p,fade=t=out:st=${holdTime - fadeTime}:d=${fadeTime}[v1]`,
+    "-map", "[v1]",
+    "-map", "1:a",
+    "-c:v", "libx264",
+    "-c:a", "aac",
+    "-shortest",
+    outName,
+  ]);
+  listFile.push(`file ${outName}`);
+}
 
-      const listFile: string[] = ["ffconcat version 1.0"];
-      for (let i = 0; i < pagesWithAudio.length; i++) {
-        const imageName = images[i].name;
-        // Create a video segment: loop the image for holdTime seconds, fade out
-        const outName = `seg${i}.mp4`;
-        await ffmpeg.exec([
-          "-loop",
-          "1",
-          "-i",
-          imageName,
-          "-i",
-          `audio${i}.mp3`,
-          "-i",
-          "whoosh.mp3",
-          "-filter_complex",
-          `[0:v]format=yuv420p,fade=t=out:st=${holdTime - fadeTime}:d=${fadeTime}[v1];[1:a]adelay=0|0[a1];[2:a]adelay=${
-            (holdTime - fadeTime) * 1000
-          }|${(holdTime - fadeTime) * 1000}[a2];[a1][a2]amix=inputs=2:duration=shortest[aout]`,
-          "-map",
-          "[v1]",
-          "-map",
-          "[aout]",
-          "-c:v",
-          "libx264",
-          "-c:a",
-          "aac",
-          "-shortest",
-          outName,
-        ]);
-        listFile.push(`file ${outName}`);
-      }
+// 6) Concatenate segments and download
+// ...
+
 
       // 6) Write concat list and produce final video
       await ffmpeg.writeFile(
