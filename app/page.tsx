@@ -254,8 +254,6 @@ const ffmpeg = new FFmpeg();
 // Load core files from /public/ffmpeg.  Copy these files from
 // node_modules/@ffmpeg/core/dist into public/ffmpeg (see step 2).
 await ffmpeg.load({
-  coreURL: "/ffmpeg/ffmpeg-core.js",
-  wasmURL: "/ffmpeg/ffmpeg-core.wasm",
   workerURL: "/ffmpeg/ffmpeg-core.worker.js",
 });
 
