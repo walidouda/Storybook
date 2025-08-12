@@ -254,7 +254,8 @@ const ffmpeg = new FFmpeg();
 // Load core files from /public/ffmpeg.  Copy these files from
 // node_modules/@ffmpeg/core/dist into public/ffmpeg (see step 2).
 await ffmpeg.load({
-  workerURL: "/ffmpeg/ffmpeg-core.worker.js",
+  coreURL: "/ffmpeg/ffmpeg-core.js",
+  wasmURL: "/ffmpeg/ffmpeg-core.wasm",
 });
 
 // 4) Write images and audio into FFmpeg FS
