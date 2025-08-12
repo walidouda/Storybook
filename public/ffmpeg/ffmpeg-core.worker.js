@@ -1,2 +1,3 @@
-// public/ffmpeg/ffmpeg-core.worker.js
-importScripts('https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd/ffmpeg-core.js');
+/// public/ffmpeg/ffmpeg-core.worker.js
+// Load the local FFmpeg core script into the worker
+importScripts('ffmpeg-core.js');
